@@ -33,6 +33,11 @@ const HARMONIC_WEIGHTS: [f32; 4] = [1.0, 0.5, 0.33, 0.25];
 /// beats). A true tempo has these; a false 3:2 tempo (triplet hats read as
 /// the beat, e.g. 135 for a 90 BPM groove) does not. This is what separates
 /// "90 with a triplet shuffle" from "135".
+/// Weight of the line at 1.5x the beat. Syncopated grooves (the 3+3+2
+/// "tresillo" of afrobeats, dancehall and amapiano) put their strongest line
+/// there. It used to be mistaken for the beat itself (90 BPM read as 135);
+/// now it counts as evidence FOR the slower tempo that explains it.
+const SYNCOPATION_WEIGHT: f32 = 0.7;
 /// How much of the beat-level (fundamental) score comes from the low and mid
 /// groups instead of all groups.
 const BODY_SHARE: f32 = 0.7;
@@ -372,6 +377,10 @@ impl TempoSpectrum {
                 };
                 s += w * m;
             }
+        }
+        let sync = (k as f64 * 1.5).round() as usize;
+        if sync < self.mag.len() {
+            s += SYNCOPATION_WEIGHT * self.line(sync, 2);
         }
         for (div, w) in SUBHARMONIC_WEIGHTS {
             let idx = (k as f64 / div as f64).round() as usize;
