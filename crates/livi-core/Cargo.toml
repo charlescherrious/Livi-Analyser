@@ -1,0 +1,12 @@
+[package]
+name = "livi-core"
+version = "0.1.0"
+edition = "2021"
+description = "Offline audio decoding plus BPM and key detection for Livi Analyser"
+
+[dependencies]
+symphonia = { version = "0.5", default-features = false, features = ["mp3", "flac", "wav", "aiff", "pcm"] }
+rustfft = "6"
+rubato = "0.16"
+serde = { version = "1", features = ["derive"] }
+thiserror = "2"
