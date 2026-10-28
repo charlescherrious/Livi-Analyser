@@ -78,7 +78,7 @@ How to use it:
 1. Put it on the mixer track (or master) that plays the song.
 2. Pick the genre, press **Listen to this track**, then press play in your DAW. After 8 seconds or more the **Analyse now** button turns on (it also stops by itself at 60 seconds).
 3. Or press **Open file...** to analyse a song from your disk.
-4. The BPM, key, Camelot code and the delay / reverb table appear. The Half, Double, ÷1.5 and ×1.5 buttons fix mix-ups, and **Use** next to "Project tempo" copies your DAW's tempo.
+4. The BPM, key, Camelot code and the delay / reverb table appear. The Half and Double buttons fix octave mix-ups, and **Use** next to "Project tempo" copies your DAW's tempo.
 
 Note: dragging a file onto a plugin window is not supported yet (the plugin toolkit does not pass drops through), so use **Open file...**.
 

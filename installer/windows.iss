@@ -1,46 +1,50 @@
-; Livi Analyser by CC Audio: one setup.exe with tick boxes.
-; Built by the GitHub workflow (see .github/workflows/build.yml).
-; Expects, next to this file's "build" folder:
-;   build\app-setup.exe            (the desktop app installer made by Tauri)
-;   build\Livi Analyser.vst3\...   (the plugin folder made by cargo xtask)
+; One installer with tick boxes: desktop app and/or VST3 plugin (CC Audio).
+; Built in CI by .github/workflows/build.yml. Expects installer/payload/ to hold:
+;   desktop-setup.exe       the Tauri (NSIS) installer for the desktop app
+;   vst3\Livi Analyser.vst3 the plugin bundle (a folder)
 
 #define AppName "Livi Analyser"
 #define AppVersion "0.2.0"
 
 [Setup]
-AppId={{6B1D2C58-3B7A-4C6B-9E0B-5C1A4C0A11A1}
+AppId={{6F1D2C4E-8B7A-4E55-9C3A-4C43A0D1A5E1}
 AppName={#AppName}
 AppVersion={#AppVersion}
 AppPublisher=CC Audio
-DefaultDirName={commonpf64}\CC Audio\{#AppName}
-DisableDirPage=yes
+DefaultDirName={autopf}\CC Audio\{#AppName}
+DefaultGroupName=CC Audio
 DisableProgramGroupPage=yes
 PrivilegesRequired=admin
 ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
-OutputDir=output
-OutputBaseFilename=LiviAnalyser-Setup
+OutputDir=Output
+OutputBaseFilename=Livi-Analyser-Setup
 Compression=lzma2
 SolidCompression=yes
 WizardStyle=modern
-UninstallDisplayName={#AppName} (CC Audio plugin)
+DisableDirPage=yes
 
 [Types]
-Name: "full"; Description: "Install everything"
+Name: "full"; Description: "Desktop app and VST3 plugin"
 Name: "custom"; Description: "Choose what to install"; Flags: iscustom
 
 [Components]
-Name: "app"; Description: "Desktop app (drag a song in, get BPM and key)"; Types: full custom
-Name: "vst3"; Description: "VST3 plugin for FL Studio, Ableton, Reaper and others (listed under CC Audio)"; Types: full custom
+Name: "desktop"; Description: "Desktop app"; Types: full custom
+Name: "vst3"; Description: "VST3 plugin (listed under CC Audio in your DAW)"; Types: full custom
 
 [Files]
-; The desktop app is installed by its own installer, run silently below.
-Source: "build\app-setup.exe"; DestDir: "{tmp}"; Components: app; Flags: deleteafterinstall
-; The plugin goes in the standard VST3 folder, inside a "CC Audio" folder.
-Source: "build\Livi Analyser.vst3\*"; DestDir: "{commoncf64}\VST3\CC Audio\Livi Analyser.vst3"; Components: vst3; Flags: recursesubdirs createallsubdirs ignoreversion
+Source: "payload\desktop-setup.exe"; DestDir: "{tmp}"; Flags: deleteafterinstall; Components: desktop
+Source: "payload\vst3\Livi Analyser.vst3\*"; DestDir: "{commoncf64}\VST3\CC Audio\Livi Analyser.vst3"; Flags: recursesubdirs createallsubdirs ignoreversion; Components: vst3
 
 [Run]
-Filename: "{tmp}\app-setup.exe"; Parameters: "/S"; Components: app; StatusMsg: "Installing the desktop app..."; Flags: waituntilterminated
+; The desktop app installs through its own installer (it sets up WebView2 if needed).
+Filename: "{tmp}\desktop-setup.exe"; Parameters: "/S"; StatusMsg: "Installing the desktop app..."; Flags: waituntilterminated; Components: desktop
 
-[UninstallDelete]
-Type: filesandordirs; Name: "{commoncf64}\VST3\CC Audio\Livi Analyser.vst3"
+[Code]
+procedure CurPageChanged(CurPageID: Integer);
+begin
+  if CurPageID = wpFinished then
+    WizardForm.FinishedLabel.Caption :=
+      'Livi Analyser is installed.' + #13#10#13#10 +
+      'If you installed the plugin: in FL Studio open Options > Manage plugins and click "Find installed plugins". It appears under CC Audio.';
+end;
