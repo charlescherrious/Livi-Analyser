@@ -49,10 +49,10 @@ jobs:
       - run: cargo test -p livi-core -p livi-plugin --release
       - name: Build VST3 (Windows)
         if: runner.os == 'Windows'
-        run: cargo xtask bundle livi-plugin --release
+        run: cargo run --package xtask --release -- bundle livi-plugin --release
       - name: Build VST3 (macOS, Apple Silicon + Intel)
         if: runner.os == 'macOS'
-        run: cargo xtask bundle-universal livi-plugin --release
+        run: cargo run --package xtask --release -- bundle-universal livi-plugin --release
       # DAWs group plugins by folder, so ship it inside a "CC Audio" folder.
       - name: Put the plugin in a CC Audio folder
         shell: bash
