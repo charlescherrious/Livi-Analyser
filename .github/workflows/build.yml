@@ -32,3 +32,67 @@ jobs:
             target/release/bundle/msi/*.msi
             target/release/bundle/dmg/*.dmg
           if-no-files-found: error
+
+  plugin:
+    name: VST3 plugin (CC Audio)
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-darwin,x86_64-apple-darwin
+      - uses: swatinem/rust-cache@v2
+      - run: cargo test -p livi-core -p livi-plugin --release
+      - name: Build VST3 (Windows)
+        if: runner.os == 'Windows'
+        run: cargo xtask bundle livi-plugin --release
+      - name: Build VST3 (macOS, Apple Silicon + Intel)
+        if: runner.os == 'macOS'
+        run: cargo xtask bundle-universal livi-plugin --release
+      # DAWs group plugins by folder, so ship it inside a "CC Audio" folder.
+      - name: Put the plugin in a CC Audio folder
+        shell: bash
+        run: |
+          mkdir -p "stage/CC Audio"
+          cp -R "target/bundled/Livi Analyser.vst3" "stage/CC Audio/"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: livi-analyser-vst3-${{ matrix.os }}
+          path: stage
+          if-no-files-found: error
+
+  # One Windows installer with tick boxes (desktop app / VST3 plugin).
+  installer-windows:
+    name: Windows installer (tick boxes)
+    needs: [build, plugin]
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: livi-analyser-windows-latest
+          path: artifacts/desktop
+      - uses: actions/download-artifact@v4
+        with:
+          name: livi-analyser-vst3-windows-latest
+          path: artifacts/vst3
+      - name: Gather the payload
+        shell: bash
+        run: |
+          mkdir -p installer/payload/vst3
+          cp "$(find artifacts/desktop -name '*.exe' | head -1)" installer/payload/desktop-setup.exe
+          cp -R "artifacts/vst3/CC Audio/Livi Analyser.vst3" installer/payload/vst3/
+          find installer/payload | head -20
+      - name: Install Inno Setup
+        run: choco install innosetup -y --no-progress
+      - name: Build the installer
+        run: '& "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" installer\windows.iss'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Livi-Analyser-Setup-Windows
+          path: installer/Output/Livi-Analyser-Setup.exe
+          if-no-files-found: error
