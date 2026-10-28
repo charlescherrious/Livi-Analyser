@@ -33,7 +33,7 @@ pub struct Preset {
 
 pub const PRESETS: [Preset; 5] = [
     Preset { label: "Auto (70-180)", min: 70.0, max: 180.0 },
-    Preset { label: "Afrobeats (90-125)", min: 90.0, max: 125.0 },
+    Preset { label: "Afrobeats (80-125)", min: 80.0, max: 125.0 },
     Preset { label: "Dancehall (80-115)", min: 80.0, max: 115.0 },
     Preset { label: "Amapiano (105-125)", min: 105.0, max: 125.0 },
     Preset { label: "Trap (125-175)", min: 125.0, max: 175.0 },

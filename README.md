@@ -84,11 +84,11 @@ Note: dragging a file onto a plugin window is not supported yet (the plugin tool
 
 ### Easiest: the one-click Windows installer
 
-Download **LiviAnalyser-Setup-Windows** from the GitHub Actions run and unzip it to get `LiviAnalyser-Setup.exe`. Run it, then tick what you want:
+In the GitHub Actions run, scroll to **Artifacts** and download **Livi-Analyser-Setup-Windows** (NOT `livi-analyser-windows-latest`, that one is only the desktop app). Unzip it to get `Livi-Analyser-Setup.exe`. Run it. After the welcome page, a **Select Components** page appears with two tick boxes:
 - **Desktop app**
 - **VST3 plugin** (installed into `C:\Program Files\Common Files\VST3\CC Audio\`)
 
-Then rescan plugins in your DAW. Windows may warn "Windows protected your PC" because the installer is not signed yet: click **More info > Run anyway**. The desktop app is removed from Windows **Settings > Apps**; the plugin is removed by the Livi Analyser entry there too.
+Then rescan plugins in your DAW. Windows may warn "Windows protected your PC" because the installer is not signed yet: click **More info > Run anyway**. Both parts are removed from Windows **Settings > Apps**.
 
 ### Install the plugin by hand
 

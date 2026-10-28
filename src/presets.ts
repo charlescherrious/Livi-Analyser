@@ -12,7 +12,7 @@ export interface Preset {
 
 export const PRESETS: Preset[] = [
   { id: "auto", label: "Auto", min: 70, max: 180, note: "Searches 70 to 180 BPM" },
-  { id: "afrobeats", label: "Afrobeats", min: 90, max: 125, note: "Searches 90 to 125 BPM" },
+  { id: "afrobeats", label: "Afrobeats", min: 80, max: 125, note: "Searches 80 to 125 BPM" },
   { id: "dancehall", label: "Dancehall", min: 80, max: 115, note: "Searches 80 to 115 BPM" },
   { id: "amapiano", label: "Amapiano", min: 105, max: 125, note: "Searches 105 to 125 BPM" },
   { id: "trap", label: "Trap", min: 125, max: 175, note: "Searches 125 to 175 BPM" },
