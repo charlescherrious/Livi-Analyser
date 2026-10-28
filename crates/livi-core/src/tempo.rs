@@ -36,6 +36,8 @@ const HARMONIC_WEIGHTS: [f32; 4] = [1.0, 0.5, 0.33, 0.25];
 /// How much of the beat-level (fundamental) score comes from the low and mid
 /// groups instead of all groups.
 const BODY_SHARE: f32 = 0.7;
+/// Width of the range-centre prior, in octaves (larger = weaker).
+const PRIOR_WIDTH_OCTAVES: f64 = 1.5;
 const SUBHARMONIC_WEIGHTS: [(usize, f32); 2] = [(2, 0.6), (4, 0.6)];
 /// Half-width of the moving average removed from the onset curve (frames).
 const DETREND_HALF_WIDTH: usize = 43;
@@ -399,7 +401,10 @@ impl TempoSpectrum {
 
         let scores: Vec<f32> = (k_lo..=k_hi).map(|k| self.score(k)).collect();
 
-        // Prefer tempos near the geometric middle of the allowed range.
+        // A gentle nudge toward the middle of the allowed range. It must stay
+        // weak: it exists only to break half-time / double-time ties, and a
+        // strong one wrongly demotes fast tempos (a 150 BPM track lost ~10%
+        // against 112.5 with the old width of 0.9 octaves).
         let centre = (cfg.min_bpm * cfg.max_bpm).sqrt();
         let weighted: Vec<f32> = scores
             .iter()
@@ -407,7 +412,7 @@ impl TempoSpectrum {
             .map(|(i, s)| {
                 let bpm = (k_lo + i) as f64 * self.bpm_per_bin;
                 let octaves = (bpm / centre).log2();
-                s * (-0.5 * (octaves / 0.9).powi(2)).exp() as f32
+                s * (-0.5 * (octaves / PRIOR_WIDTH_OCTAVES).powi(2)).exp() as f32
             })
             .collect();
 

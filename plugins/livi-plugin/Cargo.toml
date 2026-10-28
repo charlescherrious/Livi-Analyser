@@ -1,0 +1,19 @@
+[package]
+name = "livi-plugin"
+version = "0.1.0"
+edition = "2021"
+description = "Livi Analyser as a VST3 plugin by CC Audio"
+publish = false
+
+[lib]
+name = "livi_plugin"
+crate-type = ["cdylib"]
+
+[dependencies]
+livi-core = { path = "../../crates/livi-core" }
+nih_plug = { git = "https://github.com/robbert-vdh/nih-plug.git", default-features = false, features = ["vst3"] }
+nih_plug_egui = { git = "https://github.com/robbert-vdh/nih-plug.git" }
+
+# A native "Open file..." dialog. Only the two desktop platforms we ship.
+[target.'cfg(any(windows, target_os = "macos"))'.dependencies]
+rfd = { version = "0.17", default-features = false }

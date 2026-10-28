@@ -4,6 +4,7 @@
 //! tested on its own (`cargo test -p livi-core --release`) and reused from a
 //! command line tool or a benchmark script.
 
+pub mod calculator;
 pub mod camelot;
 pub mod decode;
 pub mod dsp;
@@ -12,5 +13,5 @@ pub mod pipeline;
 pub mod tempo;
 
 pub use pipeline::{
-    analyze_file, analyze_samples, AnalysisError, AnalysisOptions, AnalysisResult, Progress, Stage,
+    analyze_file, analyze_live, analyze_samples, AnalysisError, AnalysisOptions, AnalysisResult, Progress, Stage,
 };

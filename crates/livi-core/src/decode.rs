@@ -173,6 +173,24 @@ pub fn decode_to_mono(
     })
 }
 
+/// Resamples mono audio from `source_sr` to [`ANALYSIS_SR`]. Used by the
+/// plugin, which receives audio at whatever rate the host runs at.
+pub fn resample_mono(samples: &[f32], source_sr: u32) -> Result<Vec<f32>, AnalysisError> {
+    if source_sr == ANALYSIS_SR {
+        return Ok(samples.to_vec());
+    }
+    let mut resampler = Some(
+        FftFixedIn::<f32>::new(source_sr as usize, ANALYSIS_SR as usize, RESAMPLE_CHUNK, 2, 1)
+            .map_err(|e| AnalysisError::Decode(format!("resampler setup failed ({e})")))?,
+    );
+    let mut pending = samples.to_vec();
+    let mut out = Vec::with_capacity(samples.len() * ANALYSIS_SR as usize / source_sr as usize + 1024);
+    drain_pending(&mut pending, &mut resampler, &mut out, true)?;
+    let expected = (samples.len() as f64 * ANALYSIS_SR as f64 / source_sr as f64).round() as usize;
+    out.truncate(expected);
+    Ok(out)
+}
+
 /// Move whole chunks from `pending` through the resampler (or straight across
 /// when no resampling is needed). With `flush`, the final partial chunk is
 /// zero-padded and processed too.

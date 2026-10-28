@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["crates/livi-core", "src-tauri"]
+members = ["crates/livi-core", "src-tauri", "plugins/livi-plugin", "xtask"]
 
 [profile.release]
 opt-level = 3

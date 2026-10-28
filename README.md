@@ -57,7 +57,7 @@ The installer appears in `src-tauri/target/release/bundle/` (or `target/release/
 ## Run the tests
 
 ```
-cargo test -p livi-core --release     # audio engine (22 tests)
+cargo test -p livi-core -p livi-plugin --release   # audio engine + plugin
 npm test                              # calculator (10 tests)
 ```
 
@@ -69,6 +69,42 @@ cargo run --release -p livi-core --example analyze -- "song.mp3" 120 170   # res
 ```
 
 It prints JSON, so you can loop over a folder and compare against your `labels.csv`.
+
+## The plugin (VST3, by CC Audio)
+
+`plugins/livi-plugin` is Livi Analyser as a plugin. It passes audio through untouched and shows up in your DAW under the manufacturer **CC Audio**.
+
+How to use it:
+1. Put it on the mixer track (or master) that plays the song.
+2. Pick the genre, press **Listen to this track**, then press play in your DAW. After 8 seconds or more the **Analyse now** button turns on (it also stops by itself at 60 seconds).
+3. Or press **Open file...** to analyse a song from your disk.
+4. The BPM, key, Camelot code and the delay / reverb table appear. The Half, Double, ÷1.5 and ×1.5 buttons fix mix-ups, and **Use** next to "Project tempo" copies your DAW's tempo.
+
+Note: dragging a file onto a plugin window is not supported yet (the plugin toolkit does not pass drops through), so use **Open file...**.
+
+### Easiest: the one-click Windows installer
+
+Download **LiviAnalyser-Setup-Windows** from the GitHub Actions run and unzip it to get `LiviAnalyser-Setup.exe`. Run it, then tick what you want:
+- **Desktop app**
+- **VST3 plugin** (installed into `C:\Program Files\Common Files\VST3\CC Audio\`)
+
+Then rescan plugins in your DAW. Windows may warn "Windows protected your PC" because the installer is not signed yet: click **More info > Run anyway**. The desktop app is removed from Windows **Settings > Apps**; the plugin is removed by the Livi Analyser entry there too.
+
+### Install the plugin by hand
+
+Download the `livi-analyser-vst3-...` artifact from the GitHub Actions run (same place as the installers) and unzip it. Inside is a folder called **CC Audio**.
+
+**Windows (FL Studio, Ableton, Reaper ...)**
+1. Copy the whole **CC Audio** folder into `C:\Program Files\Common Files\VST3\` (click Continue if Windows asks for permission).
+2. FL Studio: **Options > Manage plugins**. Make sure `C:\Program Files\Common Files\VST3` is in the plugin search paths, then click **Find installed plugins**.
+3. In a mixer insert slot, click the arrow > pick the plugin from the list. It is grouped under **CC Audio**.
+
+**macOS**
+1. Copy the **CC Audio** folder into `/Library/Audio/Plug-Ins/VST3/` (or `~/Library/Audio/Plug-Ins/VST3/`).
+2. The plugin is not signed yet, so macOS may say it is "damaged". Open **Terminal** and run: `xattr -cr "/Library/Audio/Plug-Ins/VST3/CC Audio"`
+3. Rescan plugins in your DAW.
+
+Build it yourself: `cargo xtask bundle livi-plugin --release` (output in `target/bundled/`).
 
 ## How it works
 

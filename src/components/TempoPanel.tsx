@@ -1,5 +1,5 @@
 import { useState, type CSSProperties } from "react";
-import { double, formatBpm, halve, isThreeTwo, isValidBpm, roundBpm, threeHalves, twoThirds } from "../calculator";
+import { double, formatBpm, halve, isValidBpm, roundBpm } from "../calculator";
 import type { AnalysisResult } from "../types";
 
 interface Props {
@@ -19,9 +19,6 @@ export function TempoPanel({ result, bpm, edited, onBpm }: Props) {
   const [draft, setDraft] = useState<string | null>(null);
   const lowConfidence = result.bpmConfidence < 0.35;
   const others = result.bpmCandidates.slice(1).filter((c) => c.score >= 0.6);
-  // A close runner-up that is exactly 3:2 (or 2:1) away is the classic
-  // "triplet feel read as the beat" confusion, e.g. 135 vs 90.
-  const rival = result.bpmCandidates.slice(1).find((c) => c.score >= 0.75 && isThreeTwo(c.bpm, result.bpmCandidates[0].bpm));
 
   return (
     <section className="panel tempo" aria-labelledby="tempo-h">
@@ -62,12 +59,6 @@ export function TempoPanel({ result, bpm, edited, onBpm }: Props) {
         <button type="button" className="btn" onClick={() => onBpm(double(bpm))} title="Use double this tempo">
           Double
         </button>
-        <button type="button" className="btn" onClick={() => onBpm(twoThirds(bpm))} title="Use two thirds of this tempo, e.g. 135 to 90">
-          ÷ 1.5
-        </button>
-        <button type="button" className="btn" onClick={() => onBpm(threeHalves(bpm))} title="Use one and a half times this tempo, e.g. 90 to 135">
-          × 1.5
-        </button>
         {edited && (
           <button type="button" className="btn btn--quiet" onClick={() => onBpm(null)}>
             Back to {formatBpm(result.bpm)}
@@ -77,16 +68,6 @@ export function TempoPanel({ result, bpm, edited, onBpm }: Props) {
 
       <p className={`status ${lowConfidence ? "status--warn" : "status--ok"}`}>{confidenceText(result.bpmConfidence)}</p>
       {lowConfidence && <p className="hint">Pick a genre above, or use Half or Double if it feels wrong.</p>}
-      {rival && (
-        <p className="hint hint--warn">
-          Close call between {formatBpm(result.bpmCandidates[0].bpm)} and {formatBpm(rival.bpm)} BPM. Grooves with a
-          triplet shuffle can read 1.5x too fast. Listen to the kick and snare, then click{" "}
-          <button type="button" className="link" onClick={() => onBpm(roundBpm(rival.bpm))}>
-            {formatBpm(rival.bpm)} BPM
-          </button>{" "}
-          if that is the pulse you tap.
-        </p>
-      )}
       {result.variableTempo && (
         <p className="hint hint--warn">The tempo changes during this track, so this is an average.</p>
       )}

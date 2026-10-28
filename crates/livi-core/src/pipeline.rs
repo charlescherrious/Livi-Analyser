@@ -130,6 +130,24 @@ pub fn analyze_file(
     Ok(result)
 }
 
+/// Analyse mono audio captured at any sample rate (for example by a plugin
+/// listening inside a DAW). Resamples to the engine's rate first.
+pub fn analyze_live(
+    samples: &[f32],
+    sample_rate: u32,
+    options: &AnalysisOptions,
+    cancel: &AtomicBool,
+    on_progress: &(dyn Fn(Progress) + Sync),
+) -> Result<AnalysisResult, AnalysisError> {
+    let started = Instant::now();
+    let resampled = decode::resample_mono(samples, sample_rate)?;
+    let mut result = analyze_samples(&resampled, ANALYSIS_SR, options, cancel, on_progress)?;
+    result.source_sample_rate = sample_rate;
+    result.duration_secs = samples.len() as f64 / sample_rate as f64;
+    result.elapsed_ms = started.elapsed().as_millis() as u64;
+    Ok(result)
+}
+
 /// Analyse mono samples that are already decoded (used by tests and tools).
 pub fn analyze_samples(
     samples: &[f32],
