@@ -124,6 +124,22 @@ export function double(bpm: number): number {
   return roundBpm(bpm * 2);
 }
 
+/** 135 -> 90. Fixes the "triplet feel read as the beat" mistake. */
+export function twoThirds(bpm: number): number {
+  return roundBpm((bpm * 2) / 3);
+}
+
+/** 90 -> 135. The reverse correction. */
+export function threeHalves(bpm: number): number {
+  return roundBpm(bpm * 1.5);
+}
+
+/** True when two tempos are a 3:2 pair (within 3%), e.g. 90 and 135. */
+export function isThreeTwo(a: number, b: number): boolean {
+  const r = Math.max(a, b) / Math.min(a, b);
+  return Math.abs(r / 1.5 - 1) <= 0.03;
+}
+
 export function formatMs(ms: number): string {
   return ms.toFixed(2);
 }

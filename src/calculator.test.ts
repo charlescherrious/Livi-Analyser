@@ -8,6 +8,9 @@ import {
   formatBpm,
   formatMs,
   halve,
+  isThreeTwo,
+  threeHalves,
+  twoThirds,
   isValidBpm,
   msToHz,
   noteMs,
@@ -84,5 +87,13 @@ describe("helpers", () => {
     expect(formatBpm(112)).toBe("112");
     expect(formatBpm(97.5)).toBe("97.5");
     expect(formatBpm(103.72)).toBe("103.72");
+  });
+
+  it("fixes 3:2 mistakes such as 135 vs 90", () => {
+    expect(twoThirds(135)).toBe(90);
+    expect(threeHalves(90)).toBe(135);
+    expect(isThreeTwo(135, 90)).toBe(true);
+    expect(isThreeTwo(144, 96)).toBe(true);
+    expect(isThreeTwo(140, 70)).toBe(false);
   });
 });

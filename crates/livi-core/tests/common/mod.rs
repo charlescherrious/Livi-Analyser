@@ -82,6 +82,11 @@ pub enum Style {
     Amapiano,
     /// Trap-like: snare only on beat 3 of each bar, 16th hats with a roll.
     Trap,
+    /// Triplet-feel groove (shuffled shaker on every triplet 8th, kick on 1
+    /// and 3, snare on 2 and 4). The triplet pulse is 1.5x the real tempo.
+    TripletLoud,
+    /// Same groove but the triplet shaker is faint and the backbeat is clear.
+    TripletSoft,
 }
 
 /// `positions` are in beats; one bar = 4 beats.
@@ -138,6 +143,22 @@ pub fn drum_loop(bpm: f64, seconds: f64, style: Style) -> Vec<f32> {
                 }
                 add(&mut out, at(b0 + 1.0), &snare(&mut noise), 0.35);
                 add(&mut out, at(b0 + 3.0), &snare(&mut noise), 0.35);
+            }
+            Style::TripletLoud | Style::TripletSoft => {
+                let (hat_gain, snare_gain) = match style {
+                    Style::TripletLoud => (0.55, 0.45),
+                    _ => (0.2, 0.6),
+                };
+                for pos in [0.0, 2.0, 2.667] {
+                    add(&mut out, at(b0 + pos), &k, 0.9);
+                }
+                for beat in [1.0, 3.0] {
+                    add(&mut out, at(b0 + beat), &snare(&mut noise), snare_gain);
+                }
+                for s in 0..12 {
+                    let g = if s % 3 == 0 { hat_gain * 0.7 } else { hat_gain };
+                    add(&mut out, at(b0 + s as f64 * (2.0 / 3.0)), &hat(&mut noise, 0.012), g);
+                }
             }
             Style::Trap => {
                 for pos in [0.0, 1.75, 2.5, 3.5] {

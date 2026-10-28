@@ -29,6 +29,14 @@ const MEL_FMAX: f32 = 10_000.0;
 const DB_FLOOR: f32 = -60.0;
 /// Weights for the beat frequency and its 2nd, 3rd and 4th multiples.
 const HARMONIC_WEIGHTS: [f32; 4] = [1.0, 0.5, 0.33, 0.25];
+/// Weights for the pulses BELOW the beat: every 2 beats and every bar (4
+/// beats). A true tempo has these; a false 3:2 tempo (triplet hats read as
+/// the beat, e.g. 135 for a 90 BPM groove) does not. This is what separates
+/// "90 with a triplet shuffle" from "135".
+/// How much of the beat-level (fundamental) score comes from the low and mid
+/// groups instead of all groups.
+const BODY_SHARE: f32 = 0.7;
+const SUBHARMONIC_WEIGHTS: [(usize, f32); 2] = [(2, 0.6), (4, 0.6)];
 /// Half-width of the moving average removed from the onset curve (frames).
 const DETREND_HALF_WIDTH: usize = 43;
 /// Shortest segment (seconds) that is analysed on its own for drift checks.
@@ -282,6 +290,10 @@ struct Pick {
 
 struct TempoSpectrum {
     mag: Vec<f32>,
+    /// Same idea, but only the low and mid groups (kick, bass, snare, claps),
+    /// scaled to be comparable with `mag`. These say where the BEAT is; the
+    /// hats only describe subdivisions of it.
+    body: Vec<f32>,
     /// BPM represented by one FFT bin.
     bpm_per_bin: f64,
 }
@@ -297,7 +309,9 @@ impl TempoSpectrum {
         let fft = FftPlanner::<f32>::new().plan_fft_forward(size);
 
         let mut combined = vec![0.0f32; size / 2];
-        for env in envs {
+        let mut body = vec![0.0f32; size / 2];
+        let n_body = (envs.len() / 2).max(1);
+        for (e_idx, env) in envs.iter().enumerate() {
             let mean = env.iter().sum::<f32>() / n as f32;
             let mut buf: Vec<Complex<f32>> = (0..size)
                 .map(|i| {
@@ -315,10 +329,17 @@ impl TempoSpectrum {
                 for (c, m) in combined.iter_mut().zip(&mags) {
                     *c += m / rms;
                 }
+                if e_idx < n_body {
+                    let scale = envs.len() as f32 / n_body as f32;
+                    for (c, m) in body.iter_mut().zip(&mags) {
+                        *c += scale * m / rms;
+                    }
+                }
             }
         }
         Self {
             mag: combined,
+            body,
             bpm_per_bin: 60.0 * fps / size as f64,
         }
     }
@@ -327,13 +348,33 @@ impl TempoSpectrum {
         (bpm / self.bpm_per_bin).round() as usize
     }
 
-    /// Harmonic-sum score for beat frequency bin `k`.
+    /// Strongest value within a few bins of `idx` (spectral lines are wide).
+    fn line(&self, idx: usize, spread: usize) -> f32 {
+        let lo = idx.saturating_sub(spread);
+        let hi = (idx + spread).min(self.mag.len() - 1);
+        self.mag[lo..=hi].iter().cloned().fold(0.0, f32::max)
+    }
+
+    /// Harmonic-sum score for beat frequency bin `k`: the beat, its
+    /// subdivisions above it, and the 2-beat / bar pulses below it.
     fn score(&self, k: usize) -> f32 {
         let mut s = 0.0;
         for (h, w) in HARMONIC_WEIGHTS.iter().enumerate() {
             let idx = k * (h + 1);
             if idx < self.mag.len() {
-                s += w * self.mag[idx];
+                // The beat itself is judged mostly on kick/snare energy.
+                let m = if h == 0 {
+                    BODY_SHARE * self.body[idx] + (1.0 - BODY_SHARE) * self.mag[idx]
+                } else {
+                    self.mag[idx]
+                };
+                s += w * m;
+            }
+        }
+        for (div, w) in SUBHARMONIC_WEIGHTS {
+            let idx = (k as f64 / div as f64).round() as usize;
+            if idx >= 1 {
+                s += w * self.line(idx, 3);
             }
         }
         s
